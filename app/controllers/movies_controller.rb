@@ -1,5 +1,9 @@
 class MoviesController < ApplicationController
 
+  def movie_params
+    params.require(:movie).permit(:title, :rating, :description, :release_date)
+  end
+
   def show
     id = params[:id] # retrieve movie ID from URI route
     @movie = Movie.find(id) # look up movie by unique ID
@@ -8,31 +12,33 @@ class MoviesController < ApplicationController
 
   def index
     @movies = Movie.all
-    case params[:sort]
-    when "title"
-      @movies.order!('title asc')
-      @title_class = "hilite"
-    when "release_date"
-      @movies.order!('release_date asc')
+    
+    if params[:sort] == "title"
+      @movies.order!("title asc")
+      @movie_title_class="hilite"
+    elsif params[:sort] == "release_date"
+      @movies.order!("release_date asc")
       @release_date_class="hilite"
     end
     
-    @all_ratings=Movie.ratings
+    @all_ratings=Movie.sort_ratings
+    
     if params[:ratings]
-      @show_ratings=params[:ratings].keys
-      session[:filtered_rating]=@show_ratings
+      @show_ratings = params[:ratings].keys
+      session[:filtered_rating] = @show_ratings
     elsif session[:filtered_rating]
-      query=Hash.new
+      query = Hash.new
       session[:filtered_rating].each do |rating|
-        query['ratings['+ rating + ']']=1
+        query['ratings['+ rating + ']'] = 1
       end
-      query['sort']=params[:sort] if params[:sort]
-      session[:filtered_rating]=nil
+      query['sort'] = params[:sort] if params[:sort]
+      session[:filtered_rating] = nil
       flash.keep
       redirect_to movies_path(query)
     else
-      @show_ratings=@all_ratings
+      @show_ratings = @all_ratings
     end
+
     @movies.where!(rating: @show_ratings)
   end
 
@@ -41,6 +47,7 @@ class MoviesController < ApplicationController
   end
 
   def create
+    byebug
     @movie = Movie.create!(movie_params)
     flash[:notice] = "#{@movie.title} was successfully created."
     redirect_to movies_path
@@ -64,10 +71,4 @@ class MoviesController < ApplicationController
     redirect_to movies_path
   end
 
-  private
-  # Making "internal" methods private is not required, but is a common practice.
-  # This helps make clear which methods respond to requests, and which ones do not.
-  def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date)
-  end
 end
