@@ -25,14 +25,14 @@ class MoviesController < ApplicationController
     
     if params[:ratings]
       @show_ratings = params[:ratings].keys
-      session[:filtered_rating] = @show_ratings
-    elsif session[:filtered_rating]
+      session[:rating] = @show_ratings
+    elsif session[:rating]
       query = Hash.new
-      session[:filtered_rating].each do |rating|
+      session[:rating].each do |rating|
         query['ratings['+ rating + ']'] = 1
       end
       query['sort'] = params[:sort] if params[:sort]
-      session[:filtered_rating] = nil
+      session[:rating] = nil
       flash.keep
       redirect_to movies_path(query)
     else
